@@ -1,0 +1,1 @@
+cmd_/home/john/OS/Homework_Two_Examples/hello_module.ko := ld -r -m elf_x86_64  -z max-page-size=0x200000  --build-id  -T ./scripts/module-common.lds -o /home/john/OS/Homework_Two_Examples/hello_module.ko /home/john/OS/Homework_Two_Examples/hello_module.o /home/john/OS/Homework_Two_Examples/hello_module.mod.o;  true

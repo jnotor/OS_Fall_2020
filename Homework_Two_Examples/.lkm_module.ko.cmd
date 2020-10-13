@@ -1,0 +1,1 @@
+cmd_/home/john/OS/Homework_Two_Examples/lkm_module.ko := ld -r -m elf_x86_64  -z max-page-size=0x200000  --build-id  -T ./scripts/module-common.lds -o /home/john/OS/Homework_Two_Examples/lkm_module.ko /home/john/OS/Homework_Two_Examples/lkm_module.o /home/john/OS/Homework_Two_Examples/lkm_module.mod.o;  true
