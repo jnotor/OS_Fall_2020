@@ -1,19 +1,20 @@
 /** Header file for RW Lock Library. writer-preferred version
  */
 #include <pthread.h>
+#include <stdbool.h>
+
 
 /** Structure to contain 2 mutexes and a single integer counter to perform read-
  * preferred RW locking
  */
 typedef struct RW_lock_s {
-    // Int to keep track of the number of readers. Accessed by read functs.
-    int reader_counter;
+    int num_readers_active;
+    int num_writers_waiting;
 
-    // Reader mutex lock use to protect reader_counter. Accessed by read functs.
-    pthread_mutex_t read_protector;
+    // Whether a writer has acquired the lock
+    bool writer_active;
 
-    // Global mutex lock that provides mutual exlusion of writers. Accessed by
-    // both read and write locking functions
+    // Globally locking mutex
     pthread_mutex_t global_lock;
 
 } RW_lock_t;

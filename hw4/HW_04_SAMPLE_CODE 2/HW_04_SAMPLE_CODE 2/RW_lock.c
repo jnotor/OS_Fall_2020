@@ -1,6 +1,7 @@
 /** C file for RW Lock Library. writer-preferred version
  */
 #include <pthread.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -13,80 +14,93 @@
  * :param type: struct RW_lock_s
  */
 void RW_lock_init(RW_lock_t *lock){
-    pthread_mutex_t read_protector = PTHREAD_MUTEX_INITIALIZER;
+    int num_readers_active = 0, num_writers_waiting = 0;
+    bool writer_active = false;
     pthread_mutex_t global_lock = PTHREAD_MUTEX_INITIALIZER;
-    int reader_counter = 0;
 }
 
 
-/** Method to lock before entering READ critical section. Locks read_protector
- * before incrementing the read_counter and performing logic to see if the
- * global_lock should be locked, then unlocks read_protector after doing so or not
+/** Method to lock before entering READ critical section.
  *
  * :param lock: pointer to RW_lock_t
  * :param type: struct RW_lock_s
  */
 void RW_read_lock(RW_lock_t *lock){
-    // Lock reader protector
-    pthread_mutex_lock(&(lock->read_protector));
+    // Lock global
+    pthread_mutex_lock(&(lock->global_lock));
 
-    // Increment reader counter
-    lock->reader_counter++;
-
-    // If there's a reader (or more), lock the global lock so no writes occur
-    if (lock->reader_counter == 1){
-        pthread_mutex_lock(&(lock->global_lock));
+    while (lock->num_writers_waiting > 0 || lock->writer_active){
+        // wait(cond, lock->global_lock)
     }
 
-    // Unlock the reader_protector, as we've completed inc. counter &
-    // potentially locking global
-    pthread_mutex_unlock(&(lock->read_protector));
+    lock->num_readers_active++;
+
+    // Unlock global
+    pthread_mutex_unlock(&(lock->global_lock));
 }
 
 
-/** Method to unlock at end of READ critical section. Locks read_protector before
- * decrementing the read_counter and performing logic to see if the global_lock
- * can be unlocked, then unlocks read_protector after doing so or not
+/** Method to unlock at end of READ critical section.
  *
  * :param lock: pointer to RW_lock_t
  * :param type: struct RW_lock_s
  */
 void RW_read_unlock(RW_lock_t *lock){
-    // Lock reader protector
-    pthread_mutex_lock(&(lock->read_protector));
+    // Lock global
+    pthread_mutex_lock(&(lock->global_lock));
+    lock->num_readers_active--;
 
-    // Decrement reader counter
-    lock->reader_counter--;
-
-    // If no readers, unlock global so writer can write, potentially
-    if (lock->reader_counter == 0){
-        pthread_mutex_unlock(&(lock->global_lock));
+    if (lock->num_readers_active == 0){
+        // Notify cond (broadcast). TODO: what? in think its his main, c?
     }
 
-    // Unlock the reader_protector, as we've completed dec. counter &
-    // potentially unlocking global
-    pthread_mutex_unlock(&(lock->read_protector));
+    // Unlock global
+    pthread_mutex_unlock(&(lock->global_lock));
 }
 
 
-/** Method to lock before entering Write critical section. Simply locks struct's
- * global_lock member
+/** Method to lock before entering Write critical section.
  *
  * :param lock: pointer to RW_lock_t
  * :param type: struct RW_lock_s
  */
 void RW_write_lock(RW_lock_t *lock){
+    // Lock global
     pthread_mutex_lock(&(lock->global_lock));
+
+    // Increment num of writers
+    lock->num_writers_waiting++;
+    while (lock->num_readers_active > 0 || lock->writer_active){
+        // wait(cond, lock->global_lock) // TODO
+    }
+
+    // Decrement num of writers
+    lock->num_writers_waiting--;
+
+    // Set writer_active to true
+    lock->writer_active = true;
+
+    // Unlock global
+    pthread_mutex_unlock(&(lock->global_lock));
 }
 
 
-/** Method to unlock after exiting Write critical section. Simply unlocks struct's
- * global_lock member
+/** Method to unlock after exiting Write critical section.
  *
  * :param lock: pointer to RW_lock_t
  * :param type: struct RW_lock_s
  */
 void RW_write_unlock(RW_lock_t *lock) {
+    // Lock global
+    pthread_mutex_lock(&(lock->global_lock));
+
+    // Set writer_active to false
+    lock->writer_active = false;
+
+    // Notify cond (broadcast). TODO: what? in think its his main, c?
+
+
+    // Unlock global
     pthread_mutex_unlock(&(lock->global_lock));
 }
 
