@@ -1,4 +1,4 @@
-/** C file for RW Lock Library. writer-preferred version
+/** C file for RW Lock Library. Reader-preferred version
  */
 #include <pthread.h>
 #include <stdio.h>

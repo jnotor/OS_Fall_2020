@@ -1,4 +1,4 @@
-/** Header file for RW Lock Library. writer-preferred version
+/** Header file for RW Lock Library. Reader-preferred version
  */
 #include <pthread.h>
 

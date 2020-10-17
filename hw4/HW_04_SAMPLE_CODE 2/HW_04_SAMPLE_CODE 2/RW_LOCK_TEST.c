@@ -25,8 +25,6 @@
 
 #define  ARRAY_SIZE  1000
 
-// Declare global shared data:
-
 // array to be filled and checked
 int big_array[ARRAY_SIZE];
 
@@ -34,29 +32,23 @@ int big_array[ARRAY_SIZE];
 // incremented by filler, monitored by reader for checksum use
 int Data_Insert_Count = 0;
 
-// TODO: delete mutex line, uncomment array_lock
-// pthread_mutex_t mutex_lock =  PTHREAD_MUTEX_INITIALIZER;
+// Init lock
 RW_lock_t array_lock;
 
 
 /**
  * Method to associate with filler thread. Iterates until array full.
- * TODO: inject synch primitives
  */
-void *put_item_in_array(){
-   // int index;
-   // int data;
-   // int sum;
-   // int sum_predicted;
-
+void *put_item_in_array() {
    while (Data_Insert_Count < ARRAY_SIZE) {
-      // pthread_mutex_lock(&mutex_lock);
+      // Lock for writing
       RW_write_lock(&array_lock);
 
+      // Set big_array at index Data_Insert_Count = Data_Insert_Count and then inc.
        big_array[Data_Insert_Count] = Data_Insert_Count;
        Data_Insert_Count++;
 
-      // pthread_mutex_unlock(&mutex_lock);
+      // Unlock from writing
       RW_write_unlock(&array_lock);
    }
 }
@@ -69,27 +61,29 @@ void *put_item_in_array(){
  * Should not perform the above is any thread is writing; can do while others read
  */
 void *array_checksum() {
-   // int data;
-   int index;
-   int sum;
-   int sum_predicted;
+   int index, sum, sum_predicted;
 
    while (Data_Insert_Count < ARRAY_SIZE) {
-      // pthread_mutex_lock(&mutex_lock);
+      // Lock for reading
       RW_read_lock(&array_lock);
 
+      // Zero out sum per iteration
       sum = 0;
+
+      // Calculate sum via Sigma iteration
       for (index=1; index < ARRAY_SIZE; index++){
          sum += big_array[index];
       }
 
+      // Calculate sum using formula
       sum_predicted = ((Data_Insert_Count-1) * (Data_Insert_Count))/2;
 
+      // Compare two sums
       if (sum != sum_predicted){
          printf("ERROR: INCONSISTENCY IN BIG_ARRAY!  sum=%d   predicted sum =%d  items_inserted=%d\n", sum, sum_predicted, Data_Insert_Count);
       }
 
-      // pthread_mutex_unlock(&mutex_lock);
+      // Unlock from reading
       RW_read_unlock(&array_lock);
    }
 }
@@ -109,7 +103,7 @@ int main() {
    pthread_t check_thread[100];
 
    // Init the RW lock
-   //RW_lock_init(&array_lock);
+   RW_lock_init(&array_lock);
 
    // Zero out the contents of the big_array
    for (c=0; c < ARRAY_SIZE; c++)
