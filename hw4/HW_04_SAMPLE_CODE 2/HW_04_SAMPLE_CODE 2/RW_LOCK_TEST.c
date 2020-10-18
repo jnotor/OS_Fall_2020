@@ -14,7 +14,7 @@
 
 #include "RW_lock.c"
 
-#define  ARRAY_SIZE  1000
+#define ARRAY_SIZE 1000
 
 // array to be filled and checked
 int big_array[ARRAY_SIZE];
@@ -28,23 +28,21 @@ RW_lock_t array_lock;
 // pthread_mutex_t mutex_lock =  PTHREAD_MUTEX_INITIALIZER;
 
 
-
-/**
- * Method to associate with filler thread. Iterates until array full.
+/** Method to associate with filler thread. Iterates until array full.
  */
-void *put_item_in_array() {
+void* put_item_in_array() {
    while (Data_Insert_Count < ARRAY_SIZE) {
-      // Lock for writing
       RW_write_lock(&array_lock);
+      // Lock for writing
       // pthread_mutex_lock(&mutex_lock);
 
       // Set big_array at index Data_Insert_Count = Data_Insert_Count and then inc.
-       big_array[Data_Insert_Count] = Data_Insert_Count;
-       Data_Insert_Count++;
-
+      big_array[Data_Insert_Count] = Data_Insert_Count;
+      Data_Insert_Count++;
+      // printf("Data_Insert_Count val: %d\n", Data_Insert_Count);
       // Unlock from writing
-      RW_write_unlock(&array_lock);
       // pthread_mutex_unlock(&mutex_lock);
+      RW_write_unlock(&array_lock);
    }
 }
 
@@ -55,13 +53,13 @@ void *put_item_in_array() {
  *
  * Should not perform the above is any thread is writing; can do while others read
  */
-void *array_checksum() {
+void* array_checksum() {
    int index, sum, sum_predicted;
+
    while (Data_Insert_Count < ARRAY_SIZE) {
       // Lock for reading
       RW_read_lock(&array_lock);
       // pthread_mutex_lock(&mutex_lock);
-
 
       // Zero out sum per iteration
       sum = 0;
@@ -75,14 +73,13 @@ void *array_checksum() {
       sum_predicted = ((Data_Insert_Count-1) * (Data_Insert_Count))/2;
 
       // Compare two sums
-      if (sum != sum_predicted){
+      if (sum != sum_predicted) {
          printf("ERROR: INCONSISTENCY IN BIG_ARRAY!  sum=%d   predicted sum =%d  items_inserted=%d\n", sum, sum_predicted, Data_Insert_Count);
       }
 
       // Unlock from reading
       RW_read_unlock(&array_lock);
       // pthread_mutex_unlock(&mutex_lock);
-
    }
 }
 

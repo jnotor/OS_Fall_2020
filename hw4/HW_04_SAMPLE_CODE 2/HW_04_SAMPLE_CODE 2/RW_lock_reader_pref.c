@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "RW_lock.h"
+#include "RW_lock_reader_pref.h"
 
 /** Method to initialize the RW_lock_t struct and ready it for use. Sets
  * read_counter to 0, and initializes both mutexes, read_protector and global_lock
