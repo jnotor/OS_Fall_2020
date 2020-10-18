@@ -17,6 +17,9 @@ typedef struct RW_lock_s {
     // Globally locking mutex
     pthread_mutex_t global_lock;
 
+    // condition to wait
+    pthread_cond_t condition;
+
 } RW_lock_t;
 
 

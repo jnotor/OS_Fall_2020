@@ -8,15 +8,6 @@
  * message to standard output.
  */
 
-/** TODO: Maybe you might want to run this code with NO sync primitives, with standard mutex,
-* and with your reader-writer locks.  It would be interesting to use the unix time
-* command to see how long the code takes to complete under various situations and with
-* various numbers of reader threads.  With this code, you'll find a simple shell
-* script that you can use to run the program multiple times.  You could pipe the shell's
-* output to a file to make records of the results of multiple experiments.  You could
-* include time commands in my shell to capture records of run time....
-*/
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
@@ -32,8 +23,10 @@ int big_array[ARRAY_SIZE];
 // incremented by filler, monitored by reader for checksum use
 int Data_Insert_Count = 0;
 
-// Init lock
+// Declare lock
 RW_lock_t array_lock;
+// pthread_mutex_t mutex_lock =  PTHREAD_MUTEX_INITIALIZER;
+
 
 
 /**
@@ -43,6 +36,7 @@ void *put_item_in_array() {
    while (Data_Insert_Count < ARRAY_SIZE) {
       // Lock for writing
       RW_write_lock(&array_lock);
+      // pthread_mutex_lock(&mutex_lock);
 
       // Set big_array at index Data_Insert_Count = Data_Insert_Count and then inc.
        big_array[Data_Insert_Count] = Data_Insert_Count;
@@ -50,6 +44,7 @@ void *put_item_in_array() {
 
       // Unlock from writing
       RW_write_unlock(&array_lock);
+      // pthread_mutex_unlock(&mutex_lock);
    }
 }
 
@@ -62,10 +57,11 @@ void *put_item_in_array() {
  */
 void *array_checksum() {
    int index, sum, sum_predicted;
-
    while (Data_Insert_Count < ARRAY_SIZE) {
       // Lock for reading
       RW_read_lock(&array_lock);
+      // pthread_mutex_lock(&mutex_lock);
+
 
       // Zero out sum per iteration
       sum = 0;
@@ -85,6 +81,8 @@ void *array_checksum() {
 
       // Unlock from reading
       RW_read_unlock(&array_lock);
+      // pthread_mutex_unlock(&mutex_lock);
+
    }
 }
 
@@ -94,8 +92,6 @@ int main() {
    // NOTE: more readers = more contention for use of single array resource
    // num reader threads declaration
    int check_thread_count = 10;
-   // used for generic counts
-   int c;
 
    // The descriptor for the single "writer" thread
    pthread_t put_thread;
@@ -105,6 +101,8 @@ int main() {
    // Init the RW lock
    RW_lock_init(&array_lock);
 
+   // used for generic counts
+   int c;
    // Zero out the contents of the big_array
    for (c=0; c < ARRAY_SIZE; c++)
       big_array[c] = 0;
