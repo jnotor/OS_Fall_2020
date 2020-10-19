@@ -8,7 +8,7 @@
 #include "RW_lock.h"
 
 /** Method to initialize the RW_lock_t struct and ready it for use. Sets
- * read_counter to 0, and initializes both mutexes, read_protector and global_lock
+ * counters to 0, writer flag to false and initializes the cond and mutex pair
  *
  * :param lock: pointer to RW_lock_t
  * :param type: struct RW_lock_s
@@ -35,8 +35,9 @@ void RW_read_lock(RW_lock_t *lock){
     // Lock global
     pthread_mutex_lock(&(lock->global_lock));
 
-    // if there are writers waiting or actively writing, wait on conditional
-    while (lock->num_writers_waiting > 0 || lock->writer_active){
+    // Chec for writers waiting or actively writing, spin if so
+    while (lock->num_writers_waiting > 0 || lock->writer_active) {
+        // cond_wait the cond/mutex pair
         pthread_cond_wait(&(lock->condition), &(lock->global_lock));
     }
 
@@ -56,6 +57,7 @@ void RW_read_unlock(RW_lock_t *lock){
 
     // Check for readers; if none, signal conditional var
     if (lock->num_readers_active == 0) {
+        // Signal condition to release/wake those cond_waiting on it
         pthread_cond_signal(&(lock->condition));
     }
 
@@ -77,8 +79,9 @@ void RW_write_lock(RW_lock_t *lock){
     // Increment num of writers
     lock->num_writers_waiting++;
 
-    // Wait on cond if there are readers active or another writer active
-    while (lock->num_readers_active > 0 || lock->writer_active == true){
+    // Check for readers active or another writer active
+    while (lock->num_readers_active > 0 || lock->writer_active == true) {
+        // cond wait the condition and mutex pair
         pthread_cond_wait(&(lock->condition), &(lock->global_lock));
     }
 
@@ -99,7 +102,7 @@ void RW_write_unlock(RW_lock_t *lock) {
     // Set writer_active to false
     lock->writer_active = false;
 
-    // Signal condition
+    // Signal condition to release/wake those cond_waiting on it
     pthread_cond_signal(&(lock->condition));
 
     // Unlock global

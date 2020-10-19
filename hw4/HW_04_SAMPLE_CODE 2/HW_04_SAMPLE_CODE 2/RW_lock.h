@@ -4,8 +4,9 @@
 #include <stdbool.h>
 
 
-/** Structure to contain 2 mutexes and a single integer counter to perform read-
- * preferred RW locking
+/** Structure to contain a pthread mutex and cond pair, 2 int counters for readers
+ * and writers, respectively, and a boolean flag for whether or not a writer is
+ * active
  */
 typedef struct RW_lock_s {
     int num_readers_active;

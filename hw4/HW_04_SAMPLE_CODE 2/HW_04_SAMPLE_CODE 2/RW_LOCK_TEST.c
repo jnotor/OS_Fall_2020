@@ -79,7 +79,6 @@ void* array_checksum() {
 }
 
 
-
 int main() {
    // NOTE: more readers = more contention for use of single array resource
    // num reader threads declaration
