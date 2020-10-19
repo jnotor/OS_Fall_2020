@@ -12,7 +12,8 @@
 #include <stdio.h>
 #include <pthread.h>
 
-#include "RW_lock_reader_pref.c"
+#include "RW_lock.c"
+// #include "RW_lock_reader_pref.c"
 
 #define ARRAY_SIZE 1000
 
@@ -82,7 +83,7 @@ void* array_checksum() {
 int main() {
    // NOTE: more readers = more contention for use of single array resource
    // num reader threads declaration
-   int check_thread_count = 100;
+   int check_thread_count = 10;
 
    // The descriptor for the single "writer" thread
    pthread_t put_thread;
