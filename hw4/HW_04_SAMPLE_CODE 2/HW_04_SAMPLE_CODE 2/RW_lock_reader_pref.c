@@ -40,7 +40,7 @@ void RW_read_lock(RW_lock_t *lock){
 
     // Unlock the reader_protector, as we've completed inc. counter &
     // potentially locking global
-    pthread_mutex_unlock(&(lock->read_protector));
+    // pthread_mutex_unlock(&(lock->read_protector));
 }
 
 
@@ -53,7 +53,7 @@ void RW_read_lock(RW_lock_t *lock){
  */
 void RW_read_unlock(RW_lock_t *lock){
     // Lock reader protector
-    pthread_mutex_lock(&(lock->read_protector));
+    // pthread_mutex_lock(&(lock->read_protector));
 
     // Decrement reader counter
     lock->reader_counter--;
