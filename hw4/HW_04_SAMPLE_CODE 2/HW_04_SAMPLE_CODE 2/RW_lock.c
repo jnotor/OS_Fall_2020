@@ -37,18 +37,11 @@ void RW_read_lock(RW_lock_t *lock){
 
     // if there are writers waiting or actively writing, wait on conditional
     while (lock->num_writers_waiting > 0 || lock->writer_active){
-        //printf("gonna cond wait in read liock\n");
-        //printf("wrtiers waiting: %i\n", lock->num_writers_waiting);
-        //printf("writer active: %s\n", lock->writer_active ? "true" : "false");
         pthread_cond_wait(&(lock->condition), &(lock->global_lock));
     }
 
     // Increment reader number
     lock->num_readers_active++;
-    //printf("readers: %d\n", lock->num_readers_active);
-
-    // Unlock global
-    // pthread_mutex_unlock(&(lock->global_lock));
 }
 
 
@@ -58,24 +51,16 @@ void RW_read_lock(RW_lock_t *lock){
  * :param type: struct RW_lock_s
  */
 void RW_read_unlock(RW_lock_t *lock){
-    //printf("start read unliock\n");
-    // Lock global
-    // pthread_mutex_lock(&(lock->global_lock));
-
     // Decrement readers
     lock->num_readers_active--;
-    //printf("NUM Readers in unlock: %d\n", lock->num_readers_active);
 
     // Check for readers; if none, signal conditional var
     if (lock->num_readers_active == 0) {
-        //printf("should signal\n");
         pthread_cond_signal(&(lock->condition));
     }
-    //printf("after if in read unlock\n");
 
     // Unlock global
     pthread_mutex_unlock(&(lock->global_lock));
-    //printf("after unlock  in read unlock\n");
 
 }
 
@@ -91,13 +76,9 @@ void RW_write_lock(RW_lock_t *lock){
 
     // Increment num of writers
     lock->num_writers_waiting++;
-    //printf("NUM writers: %d\n", lock->num_writers_waiting);
-    //printf("NUM readers: %d\n", lock->num_readers_active);
-    //printf("writer active: %s\n", lock->writer_active ? "true" : "false");
 
     // Wait on cond if there are readers active or another writer active
     while (lock->num_readers_active > 0 || lock->writer_active == true){
-        //printf("breaking here in write lock\n");
         pthread_cond_wait(&(lock->condition), &(lock->global_lock));
     }
 
@@ -106,11 +87,6 @@ void RW_write_lock(RW_lock_t *lock){
 
     // Set writer_active to true
     lock->writer_active = true;
-    //printf("Num writers before unlock: %d\n", lock->num_writers_waiting);
-
-    // Unlock global
-    // pthread_mutex_unlock(&(lock->global_lock));
-    // //printf("num writers after unlock: %d\n", lock->num_writers_waiting);
 }
 
 
@@ -120,9 +96,6 @@ void RW_write_lock(RW_lock_t *lock){
  * :param type: struct RW_lock_s
  */
 void RW_write_unlock(RW_lock_t *lock) {
-    // Lock global
-    // pthread_mutex_lock(&(lock->global_lock));
-
     // Set writer_active to false
     lock->writer_active = false;
 

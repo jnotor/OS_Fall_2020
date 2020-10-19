@@ -25,23 +25,20 @@ int Data_Insert_Count = 0;
 
 // Declare lock
 RW_lock_t array_lock;
-// pthread_mutex_t mutex_lock =  PTHREAD_MUTEX_INITIALIZER;
 
 
 /** Method to associate with filler thread. Iterates until array full.
  */
 void* put_item_in_array() {
    while (Data_Insert_Count < ARRAY_SIZE) {
-      RW_write_lock(&array_lock);
       // Lock for writing
-      // pthread_mutex_lock(&mutex_lock);
+      RW_write_lock(&array_lock);
 
       // Set big_array at index Data_Insert_Count = Data_Insert_Count and then inc.
       big_array[Data_Insert_Count] = Data_Insert_Count;
       Data_Insert_Count++;
-      // printf("Data_Insert_Count val: %d\n", Data_Insert_Count);
+
       // Unlock from writing
-      // pthread_mutex_unlock(&mutex_lock);
       RW_write_unlock(&array_lock);
    }
 }
@@ -59,7 +56,6 @@ void* array_checksum() {
    while (Data_Insert_Count < ARRAY_SIZE) {
       // Lock for reading
       RW_read_lock(&array_lock);
-      // pthread_mutex_lock(&mutex_lock);
 
       // Zero out sum per iteration
       sum = 0;
@@ -79,7 +75,6 @@ void* array_checksum() {
 
       // Unlock from reading
       RW_read_unlock(&array_lock);
-      // pthread_mutex_unlock(&mutex_lock);
    }
 }
 
@@ -88,7 +83,7 @@ void* array_checksum() {
 int main() {
    // NOTE: more readers = more contention for use of single array resource
    // num reader threads declaration
-   int check_thread_count = 10;
+   int check_thread_count = 20;
 
    // The descriptor for the single "writer" thread
    pthread_t put_thread;
