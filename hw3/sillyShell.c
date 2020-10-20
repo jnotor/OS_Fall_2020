@@ -15,43 +15,43 @@ static int paused_pid = 0;
 /**************************************************************/
 
 void  parse(char *line, char **argv){
-  /* 
+  /* Method to parse input
+
   param line: pointer to null terminated string; converts whitespace (WS) chars to
               null chars ('\0)
   param argv: array of pointers to arguements; 0th element becomes first non-null
-              (token) in line at the 1st position (not 0th). "Last" set to NULL 
+              (token) in line at the 1st position (not 0th). "Last" set to NULL
               marks end
   */
 
      // record address in the array of address at argv and increment it.  When
      // we run out of tokens in the string, we make the last entry in the array
      // at argv NULL.  This marks the end of pointers to tokens.
-    
+
     // while loop goes til we run out of characters in the string pointed to by line
      while (*line != '\0') // outer loop.  keep going until the whole string is read
         { // keep moving forward the pointer into the input string until
           // we encounter a non-whitespace character.  While we're at it,
           // turn all those whitespace characters we're seeing into null chars.
 
-          // interweave btwn rewriting WS with '\0' AND "break" at non-WS 
+          // interweave btwn rewriting WS with '\0' AND "break" at non-WS
           while (*line == ' ' || *line == '\t' || *line == '\n' || *line == '\r')
-           { *line = '\0';     
+           { *line = '\0';
              line++;
            }
 
-          // Non-WS found, record in *argv the address for beginning of token 
-          // I'm pointing at and increment argv 
+          // Non-WS found, record in *argv the address for beginning of token
+          // I'm pointing at and increment argv
           *argv++ = line;
 
           // increment the input line pointer until WS
-          while (*line != '\0' && *line != ' ' && *line != '\t' && *line != '\n' && *line !='\r') 
+          while (*line != '\0' && *line != ' ' && *line != '\t' && *line != '\n' && *line !='\r')
                line++;
           }
 
       // out of chars; mark end of list NULL
      *argv = NULL;
 }
-
 
 /**************************************************************/
 /* Signal Handling Routines                                   */
@@ -83,26 +83,26 @@ void ignore_signal(int signum){
         if (WIFEXITED(return_status)) {
           printf("\n%d terminated normally\n", paused_pid);
         }
+// reset paused pid since process no longer exists
         paused_pid = 0;
       }
     }
   }
 }
 
-
 /**************************************************************/
 /* Shell Command Processing Routines                          */
 /**************************************************************/
 
 void execute(char **argv){
-  /* Purpose: 
-  
+  /* Purpose: to execute a non-built in command
+
     param argv: array of pointers to commands
   */
   pid_t  pid;
-    
+
   // attempt to fork
-  if ((pid = fork()) < 0) { 
+  if ((pid = fork()) < 0) {
     printf("*** ERROR: forking child process failed\n");
     exit(1);
   }
@@ -128,6 +128,7 @@ void execute(char **argv){
           paused_pid = pid;
         }
         else {
+	    // reset pid since process dead
           paused_pid = pid;
         }
       }
@@ -141,7 +142,6 @@ void execute(char **argv){
   }
 }
 
-
 int main(int argc, char **argv, char **envp) {
   // Initialize vars without initial values
   char cwd[PATH_MAX];
@@ -149,7 +149,6 @@ int main(int argc, char **argv, char **envp) {
   int job_number_int;
   int status;
   pid_t wpid;
-
 
   int index = 0;
 
@@ -165,17 +164,13 @@ int main(int argc, char **argv, char **envp) {
   char raw_line[1024];
 
   // pointer to array of 64 pointers to char/strings. Modified after parsing to
-  //hold pointers to mem. inside of the string pointed to by pointer line
+  // hold pointers to mem. inside of the string pointed to by pointer line
   char  *line_argv[64];
 
-  // FIXME: Set signal handlers
   signal(SIGINT,  ignore_signal);   // control c
   signal(SIGTSTP, ignore_signal);   // control z
-         
-  while (1){
-    // TODO: Maybe it might be good to, somewhere in here, check to see if there's
-    // any child that wants to change its state and let it do so?
 
+  while (1){
     printf("%s> ",shell_prompt);
 
     // If no input, print a new line and await further user input
@@ -184,13 +179,12 @@ int main(int argc, char **argv, char **envp) {
       exit(0);
     }
 
-    // TODO: This is a dirty hack.  Figure it out maybe?
+    // set line end to null char
     line[strlen(line)-1]='\0';
+    // save a copy of raw_line
     strncpy(raw_line, line, 1024);
 
-
     // If something was actually typed, then do something...
-    // TODO: what is this line > 31 doing?
     if ((*line != '\0') && (*line > 31)){
 
       // Parse the input line to break it into token references to addresses
@@ -251,6 +245,3 @@ int main(int argc, char **argv, char **envp) {
     } // end if
   } // end while
 } // end main
-
-                
-
