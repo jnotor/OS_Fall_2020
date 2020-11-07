@@ -19,8 +19,7 @@
 
 // Num meals; overall process ends (threads terminate) when all consumed
 // NOTE: It may be possible that not all philosophers get to eat the same amount
-//FIXME: return to 10000000
-#define AVAILABLE_MEALS 100000
+#define AVAILABLE_MEALS 10000000
 
 
 // Each philosopher is represented by 1 "think/start eating/finish eating" thread.
@@ -38,6 +37,8 @@ pthread_mutex_t MEAL_COUNT_LOCK;
 /** Method to create philosopher eat/think process where a given philosopher, who
  * knows his own number, decides he wants two chopsticks at random.  He will at
  * least choose two DIFFERENT chopsticks
+ *
+ * @param philosopher_number_ptr: ptr to the number of the philosopher
  */
 void *philosopher_program(void *philosopher_number_ptr) {
    int philosopher_number = *((int *) philosopher_number_ptr);
@@ -49,8 +50,6 @@ void *philosopher_program(void *philosopher_number_ptr) {
    int chopstick_2;
 
    while (MEALS_ON_TABLE > 0) {
-
-      printf ("Philosopher %d is thinking\n", philosopher_number);
       usleep(1);
 
       chopstick_1 = rand() % PHILOSOPHER_COUNT;
@@ -60,11 +59,7 @@ void *philosopher_program(void *philosopher_number_ptr) {
          chopstick_2 = rand() % PHILOSOPHER_COUNT;
       } while (chopstick_1 == chopstick_2);
 
-      // NOTE: may have to return this to be one line
-      printf ("Philosopher %d wants chopsticks %d and %d\n",
-               philosopher_number, chopstick_1, chopstick_2);
-
-      // grab/lock chopsticks
+      // grab/lock chopsticks in order of lesser number first
       if (chopstick_1 > chopstick_2) {
          pthread_mutex_lock(&chopstick[chopstick_2]);
          pthread_mutex_lock(&chopstick[chopstick_1]);
@@ -74,12 +69,8 @@ void *philosopher_program(void *philosopher_number_ptr) {
          pthread_mutex_lock(&chopstick[chopstick_2]);
       }
 
-
       // eating
-      printf ("Philosopher %d is ready to eat\n",philosopher_number);
-
       usleep(2);
-
 
       // done eating. put chopsticks
       if (MEALS_ON_TABLE > 0) {
@@ -91,19 +82,15 @@ void *philosopher_program(void *philosopher_number_ptr) {
 
          // Decrement meals left
          MEALS_ON_TABLE--;
-         printf ("Philosopher %d finished eating, %d meals remaining\n",philosopher_number, MEALS_ON_TABLE);
 
          // Unlock meal count mutex
          pthread_mutex_unlock(&MEAL_COUNT_LOCK);
 
       }
-      else {
-         printf("Philosopher %d didn't eat because no food was left\n", philosopher_number);
-      }
+
       // unlock/put down chopsticks
       pthread_mutex_unlock(&chopstick[chopstick_1]);
       pthread_mutex_unlock(&chopstick[chopstick_2]);
-      printf("Philosopher %d has placed chopsticks on the table\n", philosopher_number);
    }
 
    // End of while/thread
@@ -124,6 +111,7 @@ int main() {
 
    // Create the philosopher threads
    for(i=0;i < PHILOSOPHER_COUNT;i++) {
+      // create pointers to numbers to be able to pass to thread
       int *arg = malloc(sizeof(*arg));
       if (arg == NULL){
          printf("Couldn't allocate memory for thread arg.\n");
